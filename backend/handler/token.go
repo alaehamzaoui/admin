@@ -2,12 +2,13 @@ package handler
 
 import (
 	"context"
+	"time"
+
 	"github.com/bo-mathadventure/admin/ent"
 	"github.com/bo-mathadventure/admin/ent/token"
 	"github.com/bo-mathadventure/admin/mailer"
 	"github.com/bo-mathadventure/admin/utils"
 	"github.com/gofiber/fiber/v2"
-	"time"
 )
 
 // Token godoc
@@ -38,7 +39,7 @@ func Token(ctx context.Context, db *ent.Client) fiber.Handler {
 			WithUser().
 			Only(ctx)
 		if err != nil {
-			return HandleError(c, "INVALID_TOKEN")
+			return HandleError(c, err.Error())
 		}
 
 		if queryToken.Action == mailer.ActionConfirmEmail {

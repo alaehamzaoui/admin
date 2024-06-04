@@ -3,6 +3,8 @@ package handler
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/bo-mathadventure/admin/config"
 	"github.com/bo-mathadventure/admin/ent"
 	"github.com/bo-mathadventure/admin/ent/user"
@@ -10,7 +12,6 @@ import (
 	email "github.com/cameronnewman/go-emailvalidation/v3"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
-	"time"
 )
 
 // NewUserHandler initialize routes for the given router
@@ -194,6 +195,9 @@ func getTokenLogin(ctx context.Context, db *ent.Client) fiber.Handler {
 		if err != nil {
 			return HandleInternalError(c, err)
 		}
-		return c.Redirect(fmt.Sprintf("%s?token=%s", config.GetConfig().WorkadventureURL, tokenString))
+		url := fmt.Sprintf("%s?token=%s", config.GetConfig().WorkadventureURL, tokenString)
+		return c.JSON(fiber.Map{
+			"url": url,
+		})
 	}
 }

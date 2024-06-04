@@ -89,7 +89,8 @@ const FirstForm = () => {
                     alert("login token : " + loginData.token);
                     localStorage.setItem("authToken", loginData.token);
                     sendEmail(data.email, loginData.token);
-                    
+                    window.location.href= "/home";
+
                 } else {
                     console.error("Failed to login", loginResponse.status);
                 }

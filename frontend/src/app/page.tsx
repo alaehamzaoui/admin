@@ -11,32 +11,36 @@ export default function Page() {
 
   useEffect(() => {
     const checkUserLoggedIn = async () => {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        router.push('/signin');
-      } else {
-        try {
-          const response = await fetch(`${BACKEND_URL}/auth/verifyToken`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
+        const authToken = localStorage.getItem('authToken'); // Assuming the API token is stored with this key
 
-          if (!response.ok) {
-            router.push('/auth/routes/signin');
-          } else {
-            setIsAuthenticated(true);
-          }
+        try {
+            const headers = new Headers();
+            headers.append('X-API-Key', authToken ?? ''); // Use the API token for the request
+
+            const response = await fetch(`${BACKEND_URL}/system/user/token`, {
+                headers: headers,
+            });
+
+            if (!response.ok) {
+                console.error('Failed to verify token:', response.statusText);
+                router.push('/signin');
+            } else {
+                const data = await response.json();
+                const url = data.url;
+                alert(url);
+                window.location.href = "http://"+url; // Redirect to the URL with the token
+            }
         } catch (error) {
-          console.error('Failed to verify token:', error);
-          router.push('/signin');
+            console.error('Failed to verify token:', error);
+            router.push('/signin');
         }
-      }
-      setIsLoading(false);
+
+        setIsLoading(false);
     };
 
     checkUserLoggedIn();
-  }, [router]);
+}, [router]);
+
 
   if (isLoading) {
     return (
@@ -47,13 +51,10 @@ export default function Page() {
       </div>
     );
   }
-  /*
+  
   if (!isAuthenticated) { // Add conditional rendering
     return null; // Return nothing before authentication check
-  }
-*/
-//window.location.href = 'https://play.workadventure.localhost';
-
+  } 
   return (
     <div> 
     </div>

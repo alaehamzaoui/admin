@@ -1,5 +1,5 @@
 "use client"
-import React from 'react'
+import React, { useEffect } from 'react'
 import * as z from "zod"
 import { Button } from "@/components/ui/button"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -14,6 +14,9 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import Link from 'next/link'
+import {BACKEND_URL} from '@/loadEnv';
+import router from 'next/router'
+
 
 const signInSchema = z.object({
     email: z.string().email("Email must be valid."),
@@ -21,6 +24,39 @@ const signInSchema = z.object({
 })
 
 const Page = () => {
+    /*
+    useEffect(() => {
+        const checkUserLoggedIn = async () => {
+            const authToken = localStorage.getItem('authToken'); // Assuming the API token is stored with this key
+                if (!authToken) {
+                    console.error('Failed to get token from localstorage :');
+                    router.push('/signin');
+                } else {
+                    try {
+                        const headers = new Headers();
+                        headers.append('X-API-Key', authToken ?? ''); // Use the API token for the request
+            
+                        const response = await fetch(`${BACKEND_URL}/system/user`, {
+                            headers: headers,
+                        });
+                        if (!response.ok) {
+                            console.error('Failed to verify token:', response.statusText);
+                            router.push('/signin');
+                        } else {
+                            const data = await response.json();
+                            const url = data.url;
+                            alert(url);
+                            window.location.href = "http://"+url; // Redirect to the URL with the token
+                        }
+                    //todo : check if token is valid http://localhost:4664/system/user mit X-API-Key = token
+                    router.push('/home');
+                    }
+                    catch (error) {
+                        console.error('Failed to submit data', error);
+                    }
+                }
+        };
+    }, [router]);*/
     const form = useForm<z.infer<typeof signInSchema>>({
         resolver: zodResolver(signInSchema),
         defaultValues: {
@@ -28,8 +64,30 @@ const Page = () => {
           password: "",
         },
     })
-    function onSubmit(values: z.infer<typeof signInSchema>) {
-        console.log(values)
+    async function onSubmit(data: z.infer<typeof signInSchema>) {
+        try {
+                const loginResponse = await fetch(BACKEND_URL + "/auth/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        email: data.email,
+                        password: data.password,
+                    }),
+                });
+                if (loginResponse.ok) {
+                    const loginData = await loginResponse.json();
+                    alert("login token : " + loginData.token);
+                    localStorage.setItem("authToken", loginData.token);
+                    window.location.href= "/home";
+
+                } else {
+                    console.error("Failed to login", loginResponse.status);
+                }
+        } catch (error) {
+            console.error('Failed to submit data', error);
+        }
     }
   return (
     <>

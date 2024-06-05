@@ -9,6 +9,16 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false); // Add isAuthenticated state
 
+  if (isLoading) {
+    return (
+      <div style={{ backgroundColor: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
+          Loading... <span role="img" aria-label="Loading">⌛️</span>
+        </div>
+      </div>
+    );
+  }
+  
   useEffect(() => {
     const checkUserLoggedIn = async () => {
         const authToken = localStorage.getItem('authToken'); // Assuming the API token is stored with this key
@@ -41,17 +51,6 @@ export default function Page() {
     checkUserLoggedIn();
 }, [router]);
 
-
-  if (isLoading) {
-    return (
-      <div style={{ backgroundColor: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
-          Loading... <span role="img" aria-label="Loading">⌛️</span>
-        </div>
-      </div>
-    );
-  }
-  
   if (!isAuthenticated) { // Add conditional rendering
     return null; // Return nothing before authentication check
   } 

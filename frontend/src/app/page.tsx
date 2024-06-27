@@ -6,8 +6,38 @@ import { BACKEND_URL } from '@/loadEnv';
 
 export default function Page() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // Add isAuthenticated state
+  const [isLoading, setIsLoading] = useState(true); // Start with true to show the loading state initially
+
+  useEffect(() => {
+    const checkUserLoggedIn = async () => {
+      const authToken = localStorage.getItem('authToken'); // Assuming the API token is stored with this key
+
+      try {
+        const headers = new Headers();
+        headers.append('X-API-Key', authToken ?? ''); // Use the API token for the request
+
+        const response = await fetch(`${BACKEND_URL}/system/user/`, {
+          headers: headers,
+        });
+        if (!response.ok) {
+          console.error('Failed to verify token:', response.statusText);
+          window.location.href = '/signin';
+          return; // Add return to stop further execution
+        }
+        const data = await response.json();
+        if (data.email) {
+          window.location.href = '/home';
+        } else {
+          window.location.href = '/signin';
+        }
+      } catch (error) {
+        console.error('Failed to verify token:', error);
+        window.location.href = '/signin';
+      }
+      setIsLoading(false);
+    };
+    checkUserLoggedIn();
+  }, [router]);
 
   if (isLoading) {
     return (
@@ -18,44 +48,10 @@ export default function Page() {
       </div>
     );
   }
-  
-  useEffect(() => {
-    const checkUserLoggedIn = async () => {
-        const authToken = localStorage.getItem('authToken'); // Assuming the API token is stored with this key
 
-        try {
-            const headers = new Headers();
-            headers.append('X-API-Key', authToken ?? ''); // Use the API token for the request
-
-            const response = await fetch(`${BACKEND_URL}/system/user/token`, {
-                headers: headers,
-            });
-
-            if (!response.ok) {
-                console.error('Failed to verify token:', response.statusText);
-                router.push('/signin');
-            } else {
-                const data = await response.json();
-                const url = data.url;
-                alert(url);
-                window.location.href = "http://"+url; // Redirect to the URL with the token
-            }
-        } catch (error) {
-            console.error('Failed to verify token:', error);
-            router.push('/signin');
-        }
-
-        setIsLoading(false);
-    };
-
-    checkUserLoggedIn();
-}, [router]);
-
-  if (!isAuthenticated) { // Add conditional rendering
-    return null; // Return nothing before authentication check
-  } 
   return (
-    <div> 
+    <div>
+      {/* Your main content here */}
     </div>
   );
 }

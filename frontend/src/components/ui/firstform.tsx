@@ -16,31 +16,51 @@ import Link from 'next/link'
 import NextCrypto from 'next-crypto';
 import { sendEmail } from './verification'
 import { env, send } from 'process'
-import {BACKEND_URL} from '@/loadEnv';
-
+import { BACKEND_URL } from '@/loadEnv';
+import Modal from 'react-modal';
 
 require('dotenv').config({ path: '../../.env' });
 
 const secretKey = process.env.SECRET_KEY || ""; // Provide a default value for SECRET_KEY if it is undefined
 const crypto = new NextCrypto(secretKey);
 
+const customStyles = {
+  content: {
+    top: '50%',
+    left: '50%',
+    right: 'auto',
+    bottom: 'auto',
+    marginRight: '-50%',
+    transform: 'translate(-50%, -50%)',
+    backgroundColor: '#f0f4f8',
+    padding: '20px',
+    borderRadius: '10px',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+  },
+  overlay: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+};
+
 const SignUpLayout = z.object({
-    username : z.string()
+    username: z.string()
         .min(3, "Der Nachname sollte mindestens 3 Zeichen haben.")
         .max(30, "Der Nachname sollte höchstens 30 Zeichen haben.")
         .regex(/^[a-zA-Z]+$/, "Der Name darf keine Zahlen enthalten."),
     email: z.string()
         .email("Ungültige E-Mail-Adresse")
         .regex(/^[a-zA-Z0-9._%+-]+@(stud\.)?hs-bochum\.de$/, "Die E-Mail-Adresse muss eine gültige hs-bochum.de-Adresse sein"),
-    password : z.string()
+    password: z.string()
         .min(8, "Das Passwort sollte mindestens 8 Zeichen haben."),
-    confirmPassword : z.string()
+    confirmPassword: z.string()
         .min(8, "Das Passwort sollte mindestens 8 Zeichen haben.")
 }).refine((data) => data.password === data.confirmPassword,
-    { message: "Die Passwörter stimmen nicht überein", path: ["confirmPassword"]})
-
+    { message: "Die Passwörter stimmen nicht überein", path: ["confirmPassword"] })
 
 const FirstForm = () => {
+    const [modalIsOpen, setModalIsOpen] = useState(false);
+    const [modalMessage, setModalMessage] = useState('');
+
     const form = useForm<z.infer<typeof SignUpLayout>>({
         resolver: zodResolver(SignUpLayout),
         defaultValues: {
@@ -50,7 +70,7 @@ const FirstForm = () => {
             confirmPassword: ""
         }
     });
-   
+
     async function onSubmit(data: z.infer<typeof SignUpLayout>) {
         try {
             const response = await fetch(BACKEND_URL + "/auth/register", {
@@ -68,7 +88,6 @@ const FirstForm = () => {
             });
             if (response.ok) {
                 const responseData = await response.json();
-                alert(responseData);
                 document.getElementById("form1")?.classList.add("hidden");
                 document.getElementById('form3')?.classList.remove('hidden');
 
@@ -86,10 +105,9 @@ const FirstForm = () => {
                 });
                 if (loginResponse.ok) {
                     const loginData = await loginResponse.json();
-                    alert("login token : " + loginData.token);
                     localStorage.setItem("authToken", loginData.token);
                     sendEmail(data.email, loginData.token);
-                    window.location.href= "/home";
+                    window.location.href = "/home";
 
                 } else {
                     console.error("Failed to login", loginResponse.status);
@@ -97,21 +115,22 @@ const FirstForm = () => {
             } else {
                 const errorData = await response.json();
                 if (errorData.message === "ERR_USER_EXISTS") {
-                    alert("User already exists");
+                    setModalMessage("Email schon registriert");
                 } else {
-                    console.error("Failed to submit data", response.status);
+                    setModalMessage("Failed to submit data");
                 }
+                setModalIsOpen(true);
             }
         } catch (error) {
             console.error('Failed to submit data', error);
+            setModalMessage('Failed to submit data');
+            setModalIsOpen(true);
         }
-
     }
 
-return (
-
-            
-    <div className="formWrapper ">
+    return (
+        <>
+            <div className="formWrapper ">
                 <div className="left">
                     <h3 className="title">Willkommen zurück!</h3>
                     <p>Um mit uns in Verbindung zu bleiben, melden Sie sich bitte mit Ihren persönlichen Informationen an.</p>
@@ -175,13 +194,24 @@ return (
                                     </FormItem>
                                 )}
                             />
-                            <Button type="submit" className='w-full bg-teal-600 text-zinc-200  hover:text-white  hover:bg-teal-600 '  >Submit</Button>
+                            <Button type="submit" className='w-full bg-teal-600 text-zinc-200  hover:text-white  hover:bg-teal-600 '>Submit</Button>
                         </form>
                     </Form>
                 </div>
             </div>
-)
-
+            <Modal
+                shouldCloseOnOverlayClick={false}
+                isOpen={modalIsOpen}
+                onRequestClose={() => setModalIsOpen(false)}
+                style={customStyles}
+                contentLabel="Error Message"
+            >
+                <h2 style={{ color: '#e74c3c', marginBottom: '10px' }}>Error</h2>
+                <div style={{ marginBottom: '20px', fontSize: '16px', color: '#2c3e50' }}>{modalMessage}</div>
+                <Button onClick={() => setModalIsOpen(false)} className='bg-teal-600 text-zinc-200'>Close</Button>
+            </Modal>
+        </>
+    )
 }
 
 export default FirstForm;
